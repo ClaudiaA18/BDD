@@ -1,4 +1,4 @@
-# Laboator 1
+# Laborator 1
 **Exercitiul 1:**
 
 > numele si functia unui angajat cu id data de la tastatura
