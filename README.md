@@ -16,6 +16,7 @@ tree -L 2
 ├── colocviu
 │   ├── exercitii_extra_laburi
 │   └── subiecte_rezolvari
+|       └── recap_curs.sql
 ├── pages
 │   ├── Laborator1.md
 │   ├── Laborator2.md
@@ -39,6 +40,6 @@ tree -L 2
     │   ├── Laborator7.sql
     │   └── Laborator8.sql
     └── mongo
-        ├── Laborator10.sql
-        └── Laborator11.sql
+        ├── Laborator10.txt
+        └── Laborator11.txt
 ```
