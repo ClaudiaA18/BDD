@@ -530,6 +530,19 @@ BEGIN
 END;
 
 ```
+- deci, sintaxa la proceduri:
+```
+CREATE PROCEDURE dbo.nume
+    @parametru tip_parametru
+AS
+BEGIN    
+    DECLARE
+	@variabila NVARCHAR(255);
+
+   -- do sth
+END;
+
+```
 
 ### Trigger
 - e o metoda de a executa anumite instructiuni in momentul in care pe o tabela se executa:
@@ -552,3 +565,12 @@ EXEC [DEPT_MGR_INFO];
 GO
 ```
 
+- deci, sintaxa la triggeri:
+```
+CREATE TRIGGER dbo.nume ON tabel
+AFTER INSERT, UPDATE, DELETE
+AS
+EXEC procedura;
+-- sau pui tu acolo un query, eventual il pui intre un begin si un end
+GO
+```
