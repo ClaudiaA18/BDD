@@ -89,7 +89,7 @@ BEGIN
 END
 go
 
--- i tried sth
+-- sau
 CREATE TRIGGER ceva2
 ON [dbo].[EMPLOYEE_CLONE]
 AFTER INSERT
@@ -108,9 +108,6 @@ BEGIN
   )
 END
 GO
-
--- fetch status not found si nu stiu ce, care este exact ca in oracle
--- ok
 ```
 
 ### `update`
@@ -141,10 +138,29 @@ go
 
 > sa se stearga angajatii care au departamentul situat in 'US'
 ```
-delete from [dbo].[EMPLOYEE_CLONE] where employee_id in (select employee_id from EMPLOYEE_CLONE 
-inner join departments on EMPLOYEE_CLONE.department_id = departments.department_id
-inner join locations on departments.location_id = locations.location_id where locations.country_id = 'US')
+delete
+from
+	[dbo].[EMPLOYEE_CLONE]
+where
+	employee_id
+in (
+	select
+		employee_id
+	from
+		EMPLOYEE_CLONE 
+	inner join
+		departments
+	on
+		EMPLOYEE_CLONE.department_id = departments.department_id
+	inner join
+		locations
+	on
+		departments.location_id = locations.location_id
+	where
+		locations.country_id = 'US'
+)
 go
+
 
 ```
 
