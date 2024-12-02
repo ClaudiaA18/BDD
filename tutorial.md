@@ -78,6 +78,8 @@ revin cu update
 
 Pace!
 
+## Cum sa-ti faci un setup bomba de git, vscode, oracle sql plus pe windows (+ powershell)
+
 not related, but:
 
 - cum creezi un fisier in powershell: `new-item -name "tutorial.md" -itemtype file`
