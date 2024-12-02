@@ -77,3 +77,63 @@ TL;DR totusi, n-am incercat sa vad ce se intampla dupa ce inchid vscode sau dupa
 revin cu update
 
 Pace!
+
+not related, but:
+
+- cum creezi un fisier in powershell: `new-item -name "tutorial.md" -itemtype file`
+- cum accesezi un fisier in powershell: `./tutorial.md`
+- bonus: sql plus din linia de comanda, powershell: `sqlplus` (direct =)) )
+
+da, scriu asta din vm cu windows pe care nu am decat vscode si sql plus 19c, cu git instalat pe powershell
+
+- preluat de pe [How to Create a File in PowerShell — LazyAdmin](https://lazyadmin.nl/powershell/create-file/)
+
+---
+
+Tutorial cum sa instalezi git pe powershell:
+
+- preluat de pe [Git - Downloading Package](https://git-scm.com/downloads/win), [Git - Git in PowerShell](https://git-scm.com/book/en/v2/Appendix-A%3A-Git-in-Other-Environments-Git-in-PowerShell)
+- deschizi powershell ca admin si dai urmatoarele comenzi
+
+```powershell
+Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy RemoteSigned -Force
+Install-Module posh-git -Scope CurrentUser -Force
+Install-Module posh-git -Scope CurrentUser -AllowPrerelease -Force # Newer beta version with PowerShell Core support
+Install-Module PowerShellGet -Force -SkipPublisherCheck
+Import-Module posh-git
+Add-PoshGitToProfile -AllHosts
+```
+
+- nu o sa ti mearga numai asa, asa ca dai urmatoarea comanda `winget install --id Git.Git -e --source winget`
+
+Cum sa setezi git pe powershell:
+
+```
+git --version
+git config --list
+git config --global user.name "Nume Prenume"
+git config --global user.email "numeprenume@email.com"
+git config -l
+# daca vrei sa stergi ceva: git config --global --unset user.name
+```
+
+O sa ai nevoie urgent de chei ssh
+
+```
+ssh-keygen -t rsa
+# apoi enter, enter, enter
+cd ~/.ssh
+cat is_rsa*.pub
+```
+
+```
+git clone
+# lucrezi ceva
+git add .
+git commit -m "test"
+git push 
+```
+
+la primul push, o sa ti ceara sa te conectezi la github (o sa ti apara o fereastra)
+
+you're all set =)
