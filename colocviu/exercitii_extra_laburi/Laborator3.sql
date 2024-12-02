@@ -132,3 +132,81 @@ begin
     CLOSE c_angajati;
 end;
 /
+
+-- Exercitiul 3
+/*
+Sa se scrie un bloc PL/SQL care printeaza angajatii care:
+- detin venitul maxim din fiecare departament 
+- sau detin un salariu peste media job-ului lor cu cel putin 15%. 
+Sa se poata face distinctia intre ei.
+*/
+set serveroutput on;
+DECLARE
+    CURSOR c_angajati IS
+        SELECT 
+            d.department_name,
+            d.department_id,
+            e.employee_id,
+            e.first_name || ' ' || e.last_name AS nume,
+            e.salary,
+            e.commission_pct,
+            e.job_id
+        FROM
+            employees e
+        INNER JOIN
+            departments d
+        ON
+            e.department_id = d.department_id
+        inner join
+            jobs j
+        on
+            j.job_id = e.job_id;
+    -- ok
+    angajat c_angajati%ROWTYPE;
+    venit NUMBER;
+    venit_max NUMBER;
+    sal_med_job NUMBER;
+    sal_med_job_15 NUMBER;
+begin
+    -- le luam pe bucatele
+    -- venit maxim din departament
+    -- salariu mediu job
+    -- salariu mediu job + 15%
+    -- venit angajat
+    OPEN c_angajati;
+    LOOP
+        FETCH c_angajati INTO angajat; -- dap, gen ia cate o chestie pe rand din cursor
+        -- si cursor = while
+        EXIT WHEN c_angajati%NOTFOUND; -- dap
+        -- acum iau pe departamentul acela venituri =))
+        -- venit maxim
+        select
+            max(e.salary) + nvl(max(e.commission_pct), 0) * max(e.salary) 
+        into
+            venit_max
+        from
+            employees e
+        where
+            e.employee_id = angajat.department_id;
+        -- salariu mediu job
+        select
+            avg(salary)
+        into
+            sal_med_job
+        from
+            employees e
+        where
+            e.job_id = angajat.job_id;
+        -- >= sal_med_job + 15%
+        sal_med_job_15 := sal_med_job + 0.15 * sal_med_job;
+        -- venitul acestui angajat
+        venit := angajat.salary + nvl(angajat.commission_pct, 0) * angajat.salary;
+        if venit = venit_max THEN
+            DBMS_OUTPUT.PUT_LINE(angajat.nume);
+        elsif angajat.salary >= sal_med_job_15 THEN
+            DBMS_OUTPUT.PUT_LINE(angajat.nume);
+        end if;
+    END LOOP;
+    CLOSE c_angajati;
+end;
+/
