@@ -1,4 +1,4 @@
-Laborator9_1
+-- Laborator9
 --Folosind blocuri de PL/SQL sau T-SQL vrem ca pentru fiecare locatie(oras) vrem sa aflam:
 --- Care este cel mai bine platit job = 1p
 --- Care este job-ul cel mai des schimbat (functia schimbata in job_history, daca nu e niciuna puneti "-") = 2p
@@ -70,7 +70,7 @@ where margine = (
 	from margins m
 	where m.city = city
 ) or mm.JobTitle is null;
-																										where job_id = j.job_id), 0) then 1 else 0 end) as P2,
+
 case when (select count(*)
 		   from employees esq
 		   inner join employees msq on msq.employee_id = esq.manager_id
