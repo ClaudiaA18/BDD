@@ -56,6 +56,7 @@ fetch first 1 row only;
 		2. cat de popular este acest job (facem un rank per departament si este cu atat mai popular cu cat sunt mai multi oameni cu acest job in departament)
 		3. daca exista sansa de promovare salariala sau ca si pozitie (promovare salariala = mai este macar 10% pana la salMax si 
 			promovare ca pozitie = exista un manager de dep care are aceeasi functie ca si noi + nu sunt deja manager)
+        4. in medie, nu se aloca foarte multi bani pentru aceasta functie, adica este maxim 60% dintre (salmin+salmax)/2 - 2p
 */
 
 -- 1.
@@ -210,3 +211,144 @@ BEGIN
     END LOOP;
 END;
 /
+
+-- 4.  salariul este maxim 60% dintre (salmin+salmax)/2
+set serveroutput on;
+declare
+    sal_min number;
+    sal_max number;
+    threshold number;
+BEGIN
+    for functie in
+    (
+        select
+            job_id,
+            max_salary,
+            min_salary
+        from    
+            JOBS
+    ) LOOP
+    sal_max := functie.max_salary;
+    sal_min := functie.min_salary;
+    threshold := (sal_min + sal_max) / 2 * 0.6; -- (mediana)
+    for angajat in (
+        select
+            e.first_name||' '||e.last_name as nume
+        FROM
+            employees e
+        where
+            e.job_id = functie.job_id
+        and
+            e.salary <= threshold
+    ) loop
+        DBMS_OUTPUT.PUT_LINE(angajat.nume);
+        end loop;
+    end loop;
+end;
+/
+
+-- alta rezolvare pentru 2
+-- 2.
+DECLARE
+    CURSOR cursorr IS 
+        SELECT
+            e.salary AS salariu,
+            e.employee_id AS idd,
+            j.max_salary AS salmax,
+            j.min_salary AS salmin,
+            e.job_id AS ejid,
+            m.job_id AS mjid
+        FROM
+            employees e
+            JOIN jobs j ON e.job_id = j.job_id
+            JOIN employees m ON e.manager_id = m.employee_id;
+
+    ceva cursorr%rowtype;
+    exista NUMBER := 0;
+    nr NUMBER;
+BEGIN
+    OPEN cursorr;
+    LOOP
+        FETCH cursorr INTO ceva;
+        EXIT WHEN cursorr%notfound;
+
+        -- Verificăm dacă salariul poate fi crescut cu 10% fără a depăși salariul maxim
+        IF ceva.salariu * 1.1 <= ceva.salmax THEN
+            exista := 1;
+        END IF;
+
+        -- Verificăm dacă job_id-ul angajatului este egal cu cel al managerului său
+        IF ceva.ejid = ceva.mjid THEN
+            -- Selectăm numărul de angajați care au același manager
+            SELECT COUNT(employee_id)
+            INTO nr
+            FROM employees
+            WHERE manager_id = ceva.idd;
+
+            -- Dacă nu există alți subordonați și job_id este același, setăm exista
+            IF nr = 0 THEN
+                exista := 1;
+            END IF;
+        END IF;
+
+        -- Dacă una dintre condiții a fost îndeplinită, afișăm mesajul
+    END LOOP;
+    CLOSE cursorr;
+    IF exista = 1 THEN
+            DBMS_OUTPUT.PUT_LINE('200 - ok');
+    END IF;
+END;
+/
+
+DECLARE
+    CURSOR cursorr IS 
+        SELECT
+            e.salary AS salariu,
+            e.employee_id AS idd,
+            j.max_salary AS salmax,
+            j.min_salary AS salmin,
+            e.job_id AS ejid,
+            m.job_id AS mjid
+        FROM
+            employees e
+            JOIN jobs j ON e.job_id = j.job_id
+            JOIN employees m ON e.manager_id = m.employee_id;
+
+    ceva cursorr%rowtype;
+    exista NUMBER := 0;
+    nr NUMBER;
+BEGIN
+    OPEN cursorr;
+    LOOP
+        FETCH cursorr INTO ceva;
+        EXIT WHEN cursorr%notfound;
+
+        -- Verificăm dacă salariul poate fi crescut cu 10% fără a depăși salariul maxim
+        IF ceva.salariu * 1.1 <= ceva.salmax THEN
+            exista := 1;
+        END IF;
+
+        -- Verificăm dacă job_id-ul angajatului este egal cu cel al managerului său
+        IF ceva.ejid = ceva.mjid THEN
+            -- Selectăm numărul de angajați care au același manager
+            SELECT COUNT(employee_id)
+            INTO nr
+            FROM employees
+            WHERE manager_id = ceva.idd;
+
+            -- Dacă nu există alți subordonați și job_id este același, setăm exista
+            IF nr > 0 THEN
+                exista := 1;
+            END IF;
+        END IF;
+
+    END LOOP;
+    CLOSE cursorr;
+    if exista = 1 THEN
+        DBMS_OUTPUT.PUT_LINE('Exista sansa de promovare');
+    else
+        DBMS_OUTPUT.PUT_LINE('NU exista sansa de promovare');
+    end if;
+END;
+/
+
