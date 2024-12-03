@@ -224,5 +224,47 @@ begin
 end;
 /
 
--- 5. care este cel mai popular produs de la furnizor, cumparat de clientii noi in mai multe tari (3p)
+-- 5. care este cel mai popular produs de la furnizor (asta e 1), cumparat de clientii noi in mai multe tari (3p)
+WITH ceva as (
+    select
+        s.companyname as cname
+        , p.productname as pname
+        , COUNT(*) as cnt
+    from
+        suppliers s
+    join
+        products p
+    ON
+        p.supplierid = s.supplierid
+        -- nu vede aliasuri!!!
+    group by
+        s.COMPANYNAME
+        , p.PRODUCTNAME
+) select
+    main.cname
+    , main.pname
+    , main.cnt
+from
+    ceva main
+-- vrei produsul cu maxim pe furnizor gen
+where main.cnt = (
+    select
+        max(sq.cnt)
+    from
+        ceva sq
+    where main.cname = sq.cname
+    and  ( select
+count(count(*)) as countt
+from suppliers s
+join products p
+on p.SUPPLIERID = s.SUPPLIERID
+join ORDER_DETAILS od
+on od.PRODUCTID = p.PRODUCTID
+join orders o
+on o.ORDERID = od.ORDERID
+where upper(p.PRODUCTNAME) = upper(main.pname)
+group by o.SHIPCOUNTRY
+
+    ) > 1
+    ); -- aici afli maximul pe furnizor
 
