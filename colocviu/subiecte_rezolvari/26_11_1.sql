@@ -177,4 +177,48 @@ where main.cnt = (
             )
     ) = 20; -- aici afli maximul pe furnizor
 
-
+-- 4. daca furnizorul a livrat produse catre cel putin 5 categorii distincte (2p)
+-- functie ce numara categoriile
+-- logica left the chat
+create or replace function f(supplier_id number)
+    return integer
+is
+    returns integer;
+BEGIN
+    select
+        COUNT(*)
+    into
+        returns
+    from
+        CATEGORIES c
+    join
+        PRODUCTS p
+    on
+        p.CATEGORYID = c.CATEGORYID
+    where
+        p.SUPPLIERID = supplier_id;
+    return returns;
+end f;
+/
+-- iif este if pe select
+-- iif(conditie, true, false)
+DECLARE
+    ok varchar(3);
+begin
+    for sup in 
+    (
+        select
+            s.COMPANYNAME as nume
+            ,s.supplierid as sid
+        FROM
+            suppliers s
+    ) loop
+        if  f(sup.sid) >= 5 THEN
+            ok := 'da';
+        else 
+            ok := 'nu';
+        end if;
+        DBMS_OUTPUT.PUT_LINE(sup.nume||' '||ok);
+        end loop;
+end;
+/
