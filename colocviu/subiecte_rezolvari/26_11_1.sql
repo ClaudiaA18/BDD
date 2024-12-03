@@ -8,6 +8,7 @@
 --  - 3. produsul cel mai bine vandut pentru fiecare furnizor, dar doar daca produsul a fost comandat in cel putin 20 de locatii distincte (2p)
 --  - 4. daca furnizorul a livrat produse catre cel putin 5 categorii distincte (2p)
 --  - 5. care este cel mai popular produs de la furnizor, cumparat de clientii noi in mai multe tari (3p)
+
 -- 1. max(count(product_id)) din order =))
 -- cu cte-uri!
 -- pentru nuj ce -> from acel nuj ce 
@@ -222,3 +223,6 @@ begin
         end loop;
 end;
 /
+
+-- 5. care este cel mai popular produs de la furnizor, cumparat de clientii noi in mai multe tari (3p)
+
