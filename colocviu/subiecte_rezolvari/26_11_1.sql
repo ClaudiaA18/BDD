@@ -1,9 +1,7 @@
 -- Colocviu 1
 /*
 NR 1
-
 Analiza performanței pe furnizori. Pentru fiecare furnizor (CompanyName), afișați:
-
 1.  (1p) Care este produsul cel mai vândut
 2.  ⁠(2p) Dacă furnizorul este "relevant" sau "marginal": Un furnizor este "relevant"
  dacă valoarea totală a produselor (OrderDetails.Quantity * OrderDetails.UnitPrice) 

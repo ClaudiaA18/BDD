@@ -1,5 +1,5 @@
 /*
-26_11_1_v2
+26_11_1_v2e
 NR 1
 Analiza performanței pe furnizori. Pentru fiecare furnizor (CompanyName), afișați:
 
