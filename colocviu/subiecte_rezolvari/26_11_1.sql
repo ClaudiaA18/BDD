@@ -1,17 +1,24 @@
 -- Colocviu 1
--- nr 1
--- Analizati performatnetel furnizlorilor. Pentru fiecrae furnizor, afisati:
---  - 1. care e produsul cel mai vandut (1p)
---  - 2. daca furnizorul este "relevant" sau "marginal" 
--- (relevant = valoarea totala a produselor livrate depaseste marginea
--- globala a vanzarilor pe furnizor) (2p)
---  - 3. produsul cel mai bine vandut pentru fiecare furnizor, dar doar daca produsul a fost comandat in cel putin 20 de locatii distincte (2p)
---  - 4. daca furnizorul a livrat produse catre cel putin 5 categorii distincte (2p)
---  - 5. care este cel mai popular produs de la furnizor, cumparat de clientii noi in mai multe tari (3p)
+/*
+NR 1
+
+Analiza performanței pe furnizori. Pentru fiecare furnizor (CompanyName), afișați:
+
+1.  (1p) Care este produsul cel mai vândut
+2.  ⁠(2p) Dacă furnizorul este "relevant" sau "marginal": Un furnizor este "relevant"
+ dacă valoarea totală a produselor (OrderDetails.Quantity * OrderDetails.UnitPrice) 
+ livrate depășește media globală a vânzărilor pe furnizori.
+3.  ⁠(2p) Produsul cel mai bine vândut (ProductName) pentru fiecare furnizor, 
+dar doar dacă produsul a fost comandat în cel puțin 20 locații distincte (ShipCity).
+4.  ⁠(2p) Dacă furnizorul a livrat produse către cel puțin 5 categorii distincte 
+(CategoryID) (da sau nu).
+5.  ⁠(3p) care este cel mai popular produs de la furnizor, cumpărat de clienții noi 
+in mai multe tari
+*/
 
 -- 1. max(count(product_id)) din order =))
 -- cu cte-uri!
--- pentru nuj ce -> from acel nuj ce 
+-- pentru nu stiu ce -> from acel nu stiu ce 
 WITH ceva as (
     select
         s.companyname as cname
@@ -33,7 +40,7 @@ WITH ceva as (
     , main.cnt
 from
     ceva main
--- vrei produsul cu maxim pe furnizor gen
+-- vrei produsul cu maxim pe furnizor
 where main.cnt = (
     select
         max(sq.cnt)
@@ -43,8 +50,6 @@ where main.cnt = (
     ); -- aici afli maximul pe furnizor
 
 -- 2. daca furnizorul este "relevant" sau "marginal" 
--- asta e prea business pentru mine 
--- dar i guess asta o sa lucrez... :s
 -- (relevant = valoarea totala a produselor livrate (ce am facut mai jos) depaseste 
 -- marginea globala a vanzarilor pe furnizor) > val_tot ce a ramas in stoc (2p)
 -- produsul cu valoarea totala maxima pe furnizor
@@ -109,10 +114,10 @@ begin
 end;
 /
 
--- 3. asemanator cu 1, doar ca ai o conditie in plus
--- produsul cel mai bine vandut pentru fiecare furnizor, 
+-- 3. produsul cel mai bine vandut pentru fiecare furnizor, 
 -- dar doar daca produsul a fost comandat in cel putin 20 de locatii distincte (2p)
 -- numara ptr fiecare produs city
+-- asemanator cu 1, doar ca ai o conditie in plus
 create or replace function func(product_id integer)
 return integer
 is
@@ -149,7 +154,6 @@ WITH altceva as (
         products p
     ON
         p.supplierid = s.supplierid
-        -- nu vede aliasuri!!!
     group by
         s.COMPANYNAME
         , p.PRODUCTNAME
@@ -159,7 +163,6 @@ select
     , main.pname
 from
     altceva main
--- vrei produsul cu maxim pe furnizor gen
 where main.cnt = (
     select
         max(sq.cnt)
@@ -176,11 +179,10 @@ where main.cnt = (
             where
                 pp.PRODUCTNAME = main.pname
             )
-    ) = 20; -- aici afli maximul pe furnizor
+    ) = 20; 
 
 -- 4. daca furnizorul a livrat produse catre cel putin 5 categorii distincte (2p)
 -- functie ce numara categoriile
--- logica left the chat
 create or replace function f(supplier_id number)
     return integer
 is
@@ -224,7 +226,8 @@ begin
 end;
 /
 
--- 5. care este cel mai popular produs de la furnizor (asta e 1), cumparat de clientii noi in mai multe tari (3p)
+-- 5. care este cel mai popular produs de la furnizor (asta e 1), 
+-- cumparat de clientii noi in mai multe tari (3p)
 WITH ceva as (
     select
         s.companyname as cname
@@ -236,7 +239,6 @@ WITH ceva as (
         products p
     ON
         p.supplierid = s.supplierid
-        -- nu vede aliasuri!!!
     group by
         s.COMPANYNAME
         , p.PRODUCTNAME
@@ -246,25 +248,33 @@ WITH ceva as (
     , main.cnt
 from
     ceva main
--- vrei produsul cu maxim pe furnizor gen
 where main.cnt = (
     select
         max(sq.cnt)
     from
         ceva sq
     where main.cname = sq.cname
-    and  ( select
-count(count(*)) as countt
-from suppliers s
-join products p
-on p.SUPPLIERID = s.SUPPLIERID
-join ORDER_DETAILS od
-on od.PRODUCTID = p.PRODUCTID
-join orders o
-on o.ORDERID = od.ORDERID
-where upper(p.PRODUCTNAME) = upper(main.pname)
-group by o.SHIPCOUNTRY
-
+    and  (
+        select
+        count(count(*)) as countt
+        from
+            suppliers s
+        join
+            products p
+        on
+            p.SUPPLIERID = s.SUPPLIERID
+        join
+            ORDER_DETAILS od
+        on
+            od.PRODUCTID = p.PRODUCTID
+        join
+            orders o
+        on 
+            o.ORDERID = od.ORDERID
+        where
+            upper(p.PRODUCTNAME) = upper(main.pname)
+        group by
+            o.SHIPCOUNTRY
     ) > 1
-    ); -- aici afli maximul pe furnizor
+    ); 
 

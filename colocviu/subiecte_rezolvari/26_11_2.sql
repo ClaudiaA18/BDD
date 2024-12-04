@@ -1,13 +1,17 @@
 -- 26_11_2
--- Pentru fiecare tara, afisati
--- - 1. categoria cu cele mai mari vanzari (CatgoryName)
--- - 2. daca este tara target afisati "target", altfel "normal" 
--- (target = valoarea totala a comenzilor order_details.quantity * order_details.unitprice > avg(val comanda toate tari))
--- - 3. furnizorii care au livrat produse discontinue (products.discontinued=1) din cel putin 2 categorii diferite
--- - 4. daca valoarea totala a comenzilor depaseste cu cel putin 0.2* valoare medie globala a produselor
--- - 5. cea mai profitabila locatie de livrare (orasul cu cei mai multi bani dar orasele cu cel outin 20 livrari). 
--- o locatie este profitabila diar daca are concurenta daca in tara in care se fac livrari
--- exista cel putin 2 orase in care se fac livrari.
+/*
+Pentru fiecare tara afișați:
+
+1.⁠ ⁠(1p)Categoria cu cele mai mari vânzări(CategoryName).
+
+2.⁠ ⁠(2p)Daca este tara target afișați “target”, altfel afișați “normal” ( o tara este target daca valoarea totală a comenzilor OrderDetails.Quantity * OrderDetails.UnitPrice) depășește media valorii comenzilor pe toate țările) 
+
+3.⁠ ⁠(2p)Furnizorii care au livrat produse discontinue (Products.Discontinued = 1) din cel puțin 2 categorii diferite. 
+
+4.⁠ ⁠(2p)Daca valoarea totală a comenzilor depășește cu cel puțin 20% valoarea medie globală a comenzilor. ( “da” sau “nu”) 
+
+5.⁠ ⁠(3p)Cea mai profitabila locație de livrare (ShipCity orasul care a produs cel mai mulți bani, dar ia in considerare doar orașele in care au fost cel puțin 20 de livrări). O locație este profitabila doar daca are concurenta ( in tara respectivă exista cel puțin 2 orașe in care se fac livrări)
+*/
 
 -- 1. cele mai mari vanzari = min unitsonstock
 with tara as (
@@ -47,7 +51,8 @@ where
             tara sq
     );
 
--- 2. sum(order_details.quantity * order_details.unitprice) > avg(valorilor comenzilor pe toate tarile) aka medie tot
+-- 2. sum(order_details.quantity * order_details.unitprice) 
+-- > avg(valorilor comenzilor pe toate tarile) adica medie totala
        
 with ceva as (
     select
@@ -161,10 +166,8 @@ CASE
   ELSE 'nu'
 END as tip
 from ceva main;
+-- depaseste cu 0.2, adica ai 1 + 0.2 => 1.2 asta e logica mea, acum sper sa fie ok;
 
--- depaseste cu 0.2 gen ai 1 + 0.2 => 1.2 asta e logica mea;
--- daca nu e asa, ramai sanatos ca mathe left the chat de mult =)))
--- 3:19
 -- - 5. cea mai profitabila locatie de livrare 
 -- (orasul cu cei mai multi bani dar orasele cu cel outin 20 livrari). 
 -- o locatie este profitabila doar daca are concurenta, adica daca in tara 
