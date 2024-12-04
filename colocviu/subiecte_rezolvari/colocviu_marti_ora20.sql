@@ -317,4 +317,41 @@ group by o.ShipCountry;
 go
 
 -- 5.⁠ ⁠(3p)Cea mai profitabila locație de livrare (ShipCity orasul care a produs cel mai mulți bani, dar ia in considerare doar orașele in care au fost cel puțin 20 de livrări). O locație este profitabila doar daca are concurenta ( in tara respectivă exista cel puțin 2 orașe in care se fac livrări)
+create or alter function locatie_profitabila(@country varchar(200))
+returns varchar(100) as
+begin
+    declare @result varchar(100);
+
+    -- Verificam daca tara are cel putin 2 orase diferite cu livrari
+    if exists (
+        select count(distinct o.ShipCity)
+        from Orders o
+        where o.ShipCountry = @country
+        having count(distinct o.ShipCity) >= 2
+    )
+    begin
+        -- Determinam locatia cu cele mai mari vanzari
+        select top 1
+            @result = o.ShipCity
+        from Orders o
+        join [Order Details] od on o.OrderID = od.OrderID
+        where o.ShipCountry = @country
+        group by o.ShipCity
+        having count(o.OrderID) >= 20 
+        order by sum(od.Quantity * od.UnitPrice) desc;
+    end
+    else
+    begin
+        set @result = 'Nu'
+    end
+    return @result;
+end;
+go
+
+select 
+    o.ShipCountry as Country,
+    coalesce(dbo.locatie_profitabila(o.ShipCountry), '-') as categorii_top
+from Orders o
+group by o.ShipCountry;
+go
 
