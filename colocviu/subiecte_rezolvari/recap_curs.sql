@@ -16,6 +16,7 @@ Fetch first 1 row only
 -- 2. care sunt produsele care in general sunt vandute sau in cantitati mari
 --    sau impreuna cu un alt produs din categoria lor? (1p)
 -- (cantitate mare = din toare cantit posibile vandute din order_details) sa fie in top 10% (daca cantitea vanduta e 1000, sa fim in 900+) (2p)
+
 DECLARE
   numar_minim_vanzari INT;
 BEGIN
