@@ -198,17 +198,28 @@ create or alter function target_vs_normal(@country varchar(200))
 returns varchar(100) as
 begin
     declare @result varchar(100);
-
     declare @total_sales float;
+    declare @global_avg_sales float;
+
+    -- Calcularea vanzarilor totale pentru tara specificata
     select 
         @total_sales = sum(od.Quantity * od.UnitPrice)
-    from Categories c
-    join Products p on c.CategoryID = p.CategoryID
+    from Products p
     join [Order Details] od on p.ProductID = od.ProductID
     join Orders o on od.OrderID = o.OrderID
     where o.ShipCountry = @country;
 
-    if @total_sales > (select avg(sum(Quantity * UnitPrice)) from [Order Details])
+    -- Calcularea mediei globale a vanzarilor
+    select 
+        @global_avg_sales = avg(TotalSales)
+    from (
+        select sum(od.Quantity * od.UnitPrice) as TotalSales
+        from [Order Details] od
+        join Orders o on od.OrderID = o.OrderID
+        group by o.ShipCountry
+    ) as GlobalSales;
+
+    if @total_sales > @global_avg_sales
     begin
         -- Tara target
         set @result = 'target'
