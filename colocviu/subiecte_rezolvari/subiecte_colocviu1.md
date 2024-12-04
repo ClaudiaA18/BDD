@@ -1,14 +1,5 @@
 # Subiecte Colocviu 1
 
-### TODO eu
-
-- de transformat de la esra
-  - nr 1 marti
-  - nr 1 miercuri,
-- de facut nr 2 miercuri
-- de facut nr 1 maria
-- de facut nr 1/2 de joi dimi
-
 ## marti 20
 
 ### NR 1
