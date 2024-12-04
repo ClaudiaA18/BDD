@@ -1,4 +1,4 @@
--- 26_11_2
+-- 26_11_2v2c
 /*
 NR 2
 Pentru fiecare tara afișați:
@@ -18,191 +18,212 @@ au fost cel puțin 20 de livrări). O locație este profitabila doar daca are co
 */
 
 -- 1.⁠ ⁠(1p)Categoria cu cele mai mari vânzări(CategoryName).
-create or alter function vanzari_record(@country varchar(200))
-returns varchar(100) as
+-- daca vrea pentru fiecare tara, functiile iau ca argument tara
+-- daca zice categoria => from category.
+-- vanzari => e gen profit, e gen od.Quantity * od.UnitPrice, mi se pare ca si zice
+-- cele mai mari => max => ord desc si fetch first 1 row only
+create or replace function f1(tara varchar)
+return varchar as
+returns varchar(200);
 begin
-    declare @result varchar(100);
-
-    select top 1 
-        @result = c.CategoryName
+    select c.CategoryName
+    into returns
     from Categories c
     join Products p on c.CategoryID = p.CategoryID
-    join [Order Details] od on p.ProductID = od.ProductID
+    join order_details od on p.ProductID = od.ProductID
     join Orders o on od.OrderID = o.OrderID
-    where o.ShipCountry = @country
+    where o.ShipCountry = tara
     group by c.CategoryName
-    order by sum(od.Quantity * od.UnitPrice) desc;
-
-    return @result;
+    order by sum(od.Quantity * od.UnitPrice) desc
+    fetch first 1 rows only;
+    -- grupezi dupa nume ca gen verifici per categorie
+    return returns;
 end;
-go
+/
 
 select 
-    o.ShipCountry as Country,
-    coalesce(dbo.vanzari_record(o.ShipCountry), '-') as categorii_top
+    o.ShipCountry as tara,
+    nvl(f1(o.ShipCountry), '-') as categorii_top
 from Orders o
 group by o.ShipCountry;
-go
+-- aici grupezi pe tara
+/
 
--- 2.⁠ ⁠(2p)Daca este tara target afișați “target”, altfel afișați “normal” ( o tara este target daca valoarea totală a comenzilor OrderDetails.Quantity *OrderDetails.UnitPrice) depășește media valorii comenzilor pe toate țările) 
-create or alter function target_vs_normal(@country varchar(200))
-returns varchar(100) as
+-- 2.⁠ ⁠(2p)Daca este tara target afișați “target”, altfel afișați “normal” 
+-- (o tara este target daca valoarea totală a comenzilor 
+-- OrderDetails.Quantity *OrderDetails.UnitPrice) 
+-- depășește media valorii comenzilor pe toate țările) 
+create or replace function f2(tara varchar)
+return varchar as
+    returns varchar(200);
+    vanzari_tot float;
+    med_vanzari float;
 begin
-    declare @result varchar(100);
-    declare @total_sales float;
-    declare @global_avg_sales float;
-
-    -- Calcularea vanzarilor totale pentru tara specificata
+    -- acum le iei pe bucatele
+    -- Calcularea vanzarilor totale pentru tara specificata\
+    -- vanzarile sunt pe produse gen
+    -- si le grupezi pe tari ca na pe tara cere
+    -- desi merge sa faci direct si din od, nuj de ce a luat pe produs but ok
     select 
-        @total_sales = sum(od.Quantity * od.UnitPrice)
+        sum(od.Quantity * od.UnitPrice)
+    into vanzari_tot
     from Products p
-    join [Order Details] od on p.ProductID = od.ProductID
+    join order_details od on p.ProductID = od.ProductID
     join Orders o on od.OrderID = o.OrderID
-    where o.ShipCountry = @country;
+    where o.ShipCountry = tara;
 
     -- Calcularea mediei globale a vanzarilor
     select 
-        @global_avg_sales = avg(TotalSales)
+        avg(TotalSales) -- si faci media pe toate tarile
+    into med_vanzari
     from (
-        select sum(od.Quantity * od.UnitPrice) as TotalSales
-        from [Order Details] od
-        join Orders o on od.OrderID = o.OrderID
+        select sum(od.Quantity * od.UnitPrice) as TotalSales -- faci vanzarile
+        from order_details od -- din od
+        join Orders o on od.OrderID = o.OrderID -- si le faci pe tara =S
         group by o.ShipCountry
-    ) as GlobalSales;
+    );
 
-    if @total_sales > @global_avg_sales
-    begin
+    if vanzari_tot > med_vanzari then
         -- Tara target
-        set @result = 'target'
-    end
+        returns := 'target';
     else
-    begin
         -- Tara normala
-        set @result = 'normal'
-    end
+        returns := 'normal';
+    end if;
 
-    return @result;
+    return returns;
 end;
-go
+/
 
 select 
-    o.ShipCountry as Country,
-    coalesce(dbo.target_vs_normal(o.ShipCountry), '-') as target_vs_normal_coloana
+    o.ShipCountry as tara,
+    nvl(f2(o.ShipCountry), '-') as target_vs_normal
 from Orders o
 group by o.ShipCountry;
-go
+/
 
--- 3.⁠ ⁠(2p)Furnizorii care au livrat produse discontinue (Products.Discontinued = 1) din cel puțin 2 categorii diferite. 
-create or alter function produse_discontinue(@country varchar(200))
-returns varchar(100) as
+-- 3.⁠ ⁠(2p)Furnizorii care au livrat produse discontinue 
+-- (Products.Discontinued = 1) din cel puțin 2 categorii diferite.
+-- din cel putin 2 categorii -> adica from categories si de acolo vezi ce faci si unde te duci 
+create or replace function f3(tara varchar)
+return varchar as
+    returns varchar(100);
 begin
-    declare @result varchar(100);
-
-    select 
-        @result = c.CategoryName
+    select c.CategoryName
+    into returns
     from Categories c
     join Products p on c.CategoryID = p.CategoryID
-    join [Order Details] od on p.ProductID = od.ProductID
+    join order_details od on p.ProductID = od.ProductID
     join Orders o on od.OrderID = o.OrderID
-    where o.ShipCountry = @country
+    where o.ShipCountry = tara
     and p.Discontinued = 1
-    group by c.CategoryName 
+    group by c.CategoryName --daca ai count pe asa ceva inseamna ca faci grup by si ca e in select
     having count(c.CategoryName) >=2
-    order by count(c.CategoryName);
+    order by count(c.CategoryName)
+    fetch first 1 rows only;
 
-    return @result;
+    return returns;
 end;
-go
+/
 
 select 
-    o.ShipCountry as Country,
-    coalesce(dbo.produse_discontinue(o.ShipCountry), '-') as categorii_top
+    o.ShipCountry as tara,
+    nvl(f3(o.ShipCountry), '-') as categorii_top
 from Orders o
 group by o.ShipCountry;
-go
+/
 
--- 4.⁠ ⁠(2p)Daca valoarea totală a comenzilor depășește cu cel puțin 20% valoarea medie globală a comenzilor. ( “da” sau “nu”) 
-create or alter function valoare_peste_medie(@country varchar(200))
-returns varchar(100) as
+-- 4.⁠ ⁠(2p)Daca valoarea totală a comenzilor depășește 
+-- cu cel puțin 20% valoarea medie globală a comenzilor. ( “da” sau “nu”) 
+create or replace function f4(tara varchar)
+return varchar as
+    returns varchar(100);
+    vanzari_totale float;
+    vanzari_globale float;
 begin
-    declare @result varchar(100);
-    declare @total_sales float;
-    declare @global_avg_sales float;
-
-    -- Calcularea vanzarilor totale pentru tara specificata
+    -- asta e 2ish
+    -- acum le iei pe bucatele
+    -- Calcularea vanzarilor totale pentru tara specificata\
+    -- vanzarile sunt pe produse gen
+    -- si le grupezi pe tari ca na pe tara cere
+    -- desi merge sa faci direct si din od, nuj de ce a luat pe produs but ok
     select 
-        @total_sales = sum(od.Quantity * od.UnitPrice)
+        sum(od.Quantity * od.UnitPrice)
+    into vanzari_totale
     from Products p
-    join [Order Details] od on p.ProductID = od.ProductID
+    join order_details od on p.ProductID = od.ProductID
     join Orders o on od.OrderID = o.OrderID
-    where o.ShipCountry = @country;
+    where o.ShipCountry = tara;
 
     -- Calcularea mediei globale a vanzarilor
     select 
-        @global_avg_sales = avg(TotalSales)
+        avg(TotalSales) -- si faci media pe toate tarile
+    into vanzari_globale
     from (
-        select sum(od.Quantity * od.UnitPrice) as TotalSales
-        from [Order Details] od
-        join Orders o on od.OrderID = o.OrderID
+        select sum(od.Quantity * od.UnitPrice) as TotalSales -- faci vanzarile
+        from order_details od -- din od
+        join Orders o on od.OrderID = o.OrderID -- si le faci pe tara =S
         group by o.ShipCountry
-    ) as GlobalSales;
-
-    if @total_sales > @global_avg_sales * 1.2
-    begin
-        set @result = 'da'
-    end
+    );
+    -- vanzari_globale = medie si gen da astea au fost si la 2
+    -- depaseste cu 20% adica cu 0.2 adica este cu 0.2 peste 1 adica 1.2
+    if vanzari_totale > vanzari_globale * 1.2 then
+        returns := 'da';
     else
-    begin
-        set @result = 'nu'
-    end
+        -- Tara normala
+        returns := 'nu';
+    end if;
 
-    return @result;
+    return returns;
 end;
-go
+/
 
 select 
-    o.ShipCountry as Country,
-    coalesce(dbo.valoare_peste_medie(o.ShipCountry), '-') as peste_medie
+    o.ShipCountry as tara,
+    nvl(f4(o.ShipCountry), '-') as peste_medie
 from Orders o
 group by o.ShipCountry;
-go
+/
 
--- 5.⁠ ⁠(3p)Cea mai profitabila locație de livrare (ShipCity orasul care a produs cel mai mulți bani, dar ia in considerare doar orașele in care au fost cel puțin 20 de livrări). O locație este profitabila doar daca are concurenta ( in tara respectivă exista cel puțin 2 orașe in care se fac livrări)
-create or alter function locatie_profitabila(@country varchar(200))
-returns varchar(100) as
+-- 5.⁠ ⁠(3p)Cea mai profitabila locație de livrare 
+-- (ShipCity orasul care a produs cel mai mulți bani, 
+-- dar ia in considerare doar orașele in care au fost 
+-- in cel puțin 20 de livrări). 
+-- O locație este profitabila doar daca are concurenta
+-- (in tara respectivă exista cel puțin 2 orașe in care se fac livrări)
+create or replace function f5(tara varchar)
+return varchar as
+returns varchar(100);
+ceva integer;
 begin
-    declare @result varchar(100);
-
     -- Verificam daca tara are cel putin 2 orase diferite cu livrari
-    if exists (
-        select count(distinct o.ShipCity)
+    select count(distinct o.ShipCity)
+    into ceva
         from Orders o
-        where o.ShipCountry = @country
-        having count(distinct o.ShipCity) >= 2
-    )
-    begin
+        where o.ShipCountry = tara;
+    if ceva >= 2 then
         -- Determinam locatia cu cele mai mari vanzari
-        select top 1
-            @result = o.ShipCity
+        -- vanzarile sunt in orders
+        select o.ShipCity
+        into returns
         from Orders o
-        join [Order Details] od on o.OrderID = od.OrderID
-        where o.ShipCountry = @country
+        join order_details od on o.OrderID = od.OrderID
+        where o.ShipCountry = tara
         group by o.ShipCity
-        having count(o.OrderID) >= 20 
-        order by sum(od.Quantity * od.UnitPrice) desc;
-    end
+        having count(o.OrderID) >= 20 -- daca au fost macar 20 orderuri si gen grupezi oras ca oras cere =))
+        order by sum(od.Quantity * od.UnitPrice) desc
+        fetch first 1 rows only;
     else
-    begin
-        set @result = 'Nu'
-    end
-    return @result;
+        returns := 'NU';
+    end if;
+    return returns;
 end;
-go
+/
 
 select 
-    o.ShipCountry as Country,
-    coalesce(dbo.locatie_profitabila(o.ShipCountry), '-') as categorii_top
+    o.ShipCountry as tara,
+    nvl(f5(o.ShipCountry), '-') as categorii_top
 from Orders o
 group by o.ShipCountry;
-go
+/
 
