@@ -161,30 +161,35 @@ returns varchar(200) as
 begin
     declare @result varchar(200);
 
-    with Distribuitori as (
-        select 
-            c.CustomerID,
-            p.CategoryID,
-            avg(od.Quantity) as AvgQuantity,
-            percentile_cont(0.5) within group (order by od.Quantity) over (partition by p.CategoryID) as MedianQuantity
+    if exists (
+        select 1
         from [Order Details] od
         join Orders o on od.OrderID = o.OrderID
-        join Customers c on o.CustomerID = c.CustomerID
         join Products p on od.ProductID = p.ProductID
+        join Suppliers s on p.SupplierID = s.SupplierID
         where o.ShipCountry = @shipcountry
-        group by c.CustomerID, p.CategoryID
+          and od.Quantity >= (select avg(od2.Quantity) * 1.5
+                              from [Order Details] od2
+                              where od2.ProductID = p.ProductID)
     )
-    select 
-        @result = string_agg(s.CompanyName, ', ')
-    from Distribuitori d
-    join Products p on p.CategoryID = d.CategoryID
-    join Suppliers s on p.SupplierID = s.SupplierID
-    where d.AvgQuantity >= 1.5 * d.MedianQuantity;
+    begin
+        set @result = 'Da';
+    end
+    else
+    begin
+        set @result = 'Nu';
+    end
 
     return @result;
 end;
 go
 
+select 
+    o.ShipCountry as NumeTara,
+    coalesce(dbo.redistribuitori(o.ShipCountry), '-') as Redistribuitori
+from Orders o
+group by o.ShipCountry;
+go
 
 
 -- Afisare finala
